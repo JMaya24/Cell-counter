@@ -172,19 +172,14 @@ for filename in os.listdir(i_path):
         #D)Setting a threshold
         ret, thresh = cv2.threshold(opening, 28, 255, cv2.THRESH_BINARY)
         ######SAVE Thresh
-        output_filename = filename[:-4] + "_gamma.tif"
+        output_filename = filename[:-4] + "_binary.tif"
         output_path = os.path.join(Masks, output_filename)
         tiff.imwrite(output_path, thresh)
         
-        
+        #Labeling
         labels, num_cells = label(thresh)
         fig, ax = plt.subplots()
         ax.imshow(thresh, cmap="gray")
-        ######SAVE Thresh
-        output_filename = filename[:-4] + "_threshold.tif"
-        output_path = os.path.join(Masks, output_filename)
-        tiff.imwrite(output_path, thresh)
-        plt.imshow(labels)
         
         
         #Counting 
