@@ -4,6 +4,7 @@
 @author: juanpablomayaarteaga
 """
 
+
 #Libraries
 import os
 import cv2
@@ -18,14 +19,16 @@ from scipy.ndimage.measurements import label
 
 
 
+
 #0) Initial Message
-layout = [[sg.Text('\n \n   Hello! \n \n To do the cell count, follow the steps below:  \n \n 1) Select the directory which contains the images to be analyzed.\n \n 2) Then, the images will be displayed on the screen.  \n \n 3) By left clicking, delimite the region of interest (ROI). \n      By rigth clicking, erease the selected area. \n \n 4) Once you have finished selecting your ROI, press "q" key to visualize your area. \n Press "q" key again to continue with the next image. \n \n ', 
+layout = [[sg.Text('\n \n   Hello! \n \n To do the cell count, follow the steps below:  \n \n 1) Select the directory which contains the images to be analyzed.\n \n 2) Then, the images will be displayed on the screen.  \n \n 3) By left clicking, delimite the region of interest (ROI). \n     By rigth clicking, erease the selected area. \n \n 4) Once you have finished selecting your ROI, press "q" key to visualize your area. \n     Press "q" key again to continue with the next image. \n \n ', 
                     font=("Helvetica", 20, "bold"))],
           [sg.Button("Ok")]]
                        
 window = sg.Window("Cell counter: Maya", layout)
 event, values = window.read()
 window.close()
+
 
 
 
@@ -50,10 +53,11 @@ if not os.path.isdir(Plots):
     os.mkdir(Plots)
     
 csv_doc=o_path+"Data/"
-if not os.path.isdir(excel_sheet):
+if not os.path.isdir(csv_doc):
     os.mkdir(csv_doc)
 
 df= pd.DataFrame(columns=["Image", "Cells_number", "Area"])
+
 
 
 #Use the mouse to select points, and add them to a list
@@ -67,6 +71,7 @@ def mouse_callback(event, x, y, flags, param):
     
     
 
+    
 
 #2)Loop through all the files in the input directory
 for filename in os.listdir(i_path):
@@ -99,9 +104,7 @@ for filename in os.listdir(i_path):
 
             cv2.imshow("ROI Selected, press 'q'", roi)
             cv2.waitKey(0)
-            
-            
-            
+           
         cv2.destroyAllWindows()
        
 
@@ -128,9 +131,10 @@ for filename in os.listdir(i_path):
         
         
         
-        #############5)Counting cells
+        
+        
+        #############5)Preprocessing 
 
-        ##Preprocessing
         #A)Cropping the image to adjust to the ROI
         contours, hierarchy = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         x, y, w, h = cv2.boundingRect(contours[0])
@@ -174,11 +178,15 @@ for filename in os.listdir(i_path):
         output_path = os.path.join(Masks, output_filename)
         tiff.imwrite(output_path, thresh)
         
+        
+        
+        #########6)Counting cells:
+        
         #Labeling
         labels, num_cells = label(thresh)
         fig, ax = plt.subplots()
         ax.imshow(thresh, cmap="gray")
-        max_area= 350
+        max_area= 250
         min_area= 10
         num_cells_filtered=0
         cells_areas = []
@@ -196,21 +204,26 @@ for filename in os.listdir(i_path):
                 ax.text(xc, yc, str(num_cells_filtered), color="r", fontsize=8, ha="center", va="center")
                 ax.set_title(f"{num_cells_filtered} cells")
         
+        ######SAVE Plot
+        output_plot = filename[:-4] + "_cell_counter.png"
+        fig_path = os.path.join(Plots, output_plot)
+        plt.savefig(fig_path)
+        
         
         #############7)Storage data into a Dataframe
         df.loc[len(df)]=[filename, num_cells, total_area ]
         
 
-#Export Dataframe to csv file
+#8)Export Dataframe to csv file
 df.to_csv(csv_doc+"Morfina_Apotome_measurements.csv", index=False)
-# Message
+
+
+# Ending Message
 layout = [[sg.Text('\n \n \n  Process completed! \n \n \n Inside the selected folder, there will be a directory called "Output_images". \n \n This directory will contain:\n \n A) "Masks", a folder containing the preprocessed images. \n \n B) "Plots", a folder containing plots with the identified cells. \n \n C) "Data", a folder containing the csv document with the image name, number of cells detected and area of the ROI selected \n \n \n \n', 
                    font=('Helvetica', 20, 'bold'))]]
 window = sg.Window("Proccess done", layout)
 event, values = window.read()
 window.close()
-
-        
         
     
 
