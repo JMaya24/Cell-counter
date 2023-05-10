@@ -19,7 +19,7 @@ from scipy.ndimage.measurements import label
 
 
 #0) Initial Message
-layout = [[sg.Text('\n \n   ¡Hola! \n \n Para realizar le conteo de las imágenes de Apotome, realiza los siguientes pasos:  \n \n 1) Selecciona la carpeta que contiene las imágenes a analizar.\n \n 2) Aparecerán las imágenes.  \n \n 3) Mediante clicks izquierdos, ve delimitando tu region de interés. \n      Con click derecho borrarás lo seleccionado. \n \n 4) Presiona la letra "q" de tu teclado para visualizar el area elegida y continuar. \n \n ', 
+layout = [[sg.Text('\n \n   Hello! \n \n To do the cell count, follow the steps below:  \n \n 1) Select the directory which contains the images to be analyzed.\n \n 2) Then, the images will be displayed on the screen.  \n \n 3) By left clicking, delimite the region of interest (ROI). \n      By rigth clicking, erease the selected area. \n \n 4) Once you have finished selecting your ROI, press "q" key to visualize your area. \n Press "q" key again to continue with the next image. \n \n ', 
                     font=("Helvetica", 20, "bold"))],
           [sg.Button("Ok")]]
                        
@@ -37,7 +37,7 @@ root = tk.Tk()
 root.withdraw()
 i_path = filedialog.askdirectory()
 
-o_path=i_path+"/Morfina_Output_images/"
+o_path=i_path+"/Output_images/"
 if not os.path.isdir(o_path):
     os.mkdir(o_path)
 
@@ -49,9 +49,9 @@ Plots=o_path+"Plots/"
 if not os.path.isdir(Plots):
     os.mkdir(Plots)
     
-excel_sheet=o_path+"Datos/"
+csv_doc=o_path+"Data/"
 if not os.path.isdir(excel_sheet):
-    os.mkdir(excel_sheet)
+    os.mkdir(csv_doc)
 
 df= pd.DataFrame(columns=["Image", "Cells_number", "Area"])
 
@@ -178,19 +178,23 @@ for filename in os.listdir(i_path):
         labels, num_cells = label(thresh)
         fig, ax = plt.subplots()
         ax.imshow(thresh, cmap="gray")
-        
+        max_area= 350
+        min_area= 10
+        num_cells_filtered=0
+        cells_areas = []
         
         #Counting 
         for i in range(1, num_cells+1):
             y, x = np.where(labels == i)
-            xc = (x.max() + x.min())/2
-            yc = (y.max() + y.min())/2
-            ax.text(xc, yc, str(i), color="r", fontsize=8, ha="center", va="center")
-            ax.set_title(f"{num_cells} cells")
-        ######SAVE Plot
-        output_plot = filename[:-4] + "_cell_counter.png"
-        fig_path = os.path.join(Plots, output_plot)
-        plt.savefig(fig_path)
+            area=len(x)
+        
+            if area >= min_area and area < max_area:
+                num_cells_filtered +=1
+                cells_areas.append(np.sum(labels == i))
+                xc = (x.max() + x.min())/2
+                yc = (y.max() + y.min())/2
+                ax.text(xc, yc, str(num_cells_filtered), color="r", fontsize=8, ha="center", va="center")
+                ax.set_title(f"{num_cells_filtered} cells")
         
         
         #############7)Storage data into a Dataframe
@@ -198,9 +202,9 @@ for filename in os.listdir(i_path):
         
 
 #Export Dataframe to csv file
-df.to_csv(excel_sheet+"Morfina_Apotome_measurements.csv", index=False)
+df.to_csv(csv_doc+"Morfina_Apotome_measurements.csv", index=False)
 # Message
-layout = [[sg.Text('\n \n \n ¡Listo! \n \n El procesamiento ha terminado. \n \n Dentro de la carpeta que seleccionaron en el paso (1) se encontrará la carpeta "Morfina_Output_Images". \n Esa carpeta contendrá: \n \n A) "Masks", una carpeta con el procesamiento que se hizo a las imágenes \n \n B) "Plots", una carpeta que contiene las células identificadas \n \n C) "Datos", una carpeta que contiene el csv del numero de celulas y el area \n \n \n \n', 
+layout = [[sg.Text('\n \n \n  Process completed! \n \n \n Inside the selected folder, there will be a directory called "Output_images". \n \n This directory will contain:\n \n A) "Masks", a folder containing the preprocessed images. \n \n B) "Plots", a folder containing plots with the identified cells. \n \n C) "Data", a folder containing the csv document with the image name, number of cells detected and area of the ROI selected \n \n \n \n', 
                    font=('Helvetica', 20, 'bold'))]]
 window = sg.Window("Proccess done", layout)
 event, values = window.read()
