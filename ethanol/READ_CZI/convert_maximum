@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jul 18 11:44:10 2023
+
+@author: juanpablomayaarteaga
+"""
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+import glob
+import czifile
+import tifffile
+
+# Path to the directory containing CZI images
+input_path = "/Users/juanpablomayaarteaga/Desktop/Confocal_MOR/"
+
+
+
+
+
+# DEF
+
+#List of images
+def list_czi_images(directory):
+    czi_images = glob.glob(directory + "/*.czi")
+    return czi_images
+
+
+
+
+#Nested Directory
+def create_output_directory(directory):
+    output_path = os.path.join(directory, "TIF")
+    os.makedirs(output_path, exist_ok=True)
+    return output_path
+
+
+
+
+
+
+#Images converter
+def convert_czi_to_tiff(image_path, output_directory):
+    # Open the CZI file
+    with czifile.CziFile(image_path) as czi:
+        # Get the pixel data as a numpy array
+        data = czi.asarray()
+
+        # Perform maximum projection
+        maximum_projection = np.max(data, axis=0)
+
+        # Get the base filename of the CZI image
+        base_filename = os.path.splitext(os.path.basename(image_path))[0]
+
+        # Create the output filename for the TIFF image
+        output_filename = os.path.join(output_directory, base_filename + ".tif")
+
+        # Save the maximum projection as a TIFF file
+        tifffile.imwrite(output_filename, maximum_projection)
+
+        # Display the maximum projection using Matplotlib
+        plt.imshow(maximum_projection, cmap='gray')
+        plt.show()
+
+
+
+# List all directories in the input path
+directory_list = [name for name in os.listdir(input_path) if os.path.isdir(os.path.join(input_path, name))]
+
+# Loop through each directory
+for directory in directory_list:
+    # Create the output directory for TIFF images
+    output_directory = create_output_directory(os.path.join(input_path, directory))
+    
+    # List all CZI images in the directory
+    im_list = list_czi_images(os.path.join(input_path, directory))
+    
+    # Loop through each CZI image in the directory
+    for image in im_list:
+        # Convert the CZI image to TIFF and perform maximum projection
+        convert_czi_to_tiff(image, output_directory)
