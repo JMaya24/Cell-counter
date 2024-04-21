@@ -1,4 +1,4 @@
-# ROI Selection and Cell Counter
+# Interactive ROI Selection and Cell Counter
 
 The study of cells in neurological research is crucial for understanding their dynamic roles in brain health and disease. However, manually analyzing microscopic images can be laborious and prone to human error. To address these challenges, this project aims to develop an automated system for selecting Regions of Interest (ROIs) and counting cells, functioning similarly to a digital cell counter and ROI selector that is also interactive and user-friendly.
 
